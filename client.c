@@ -13,6 +13,7 @@
 int main(int argc, char **argv){
     
     char request[8192];
+    char mockRequest[] = "GET / HTTP/1.1\nhost: hostname";
 
     switch(argc){
         case 1:
@@ -21,7 +22,7 @@ int main(int argc, char **argv){
             scanf("%s", requestFile);
         break;
         case 2:
-            
+
         break;
     }
 
