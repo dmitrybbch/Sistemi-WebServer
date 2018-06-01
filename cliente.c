@@ -62,20 +62,23 @@ int main(int argc, char** argv) {
     }
     printf("\n");
 
-    //Zeroing the server address for some reasong
+    //Zeroing the server address for some reason
     bzero((char *) &serveraddr, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET; // Sets the type of address to IPV4 (?)
- 
+
+    //Copy the desired server's first address to the internet address to use
     bcopy((char *)server->h_addr_list[0], (char *)&serveraddr.sin_addr.s_addr, server->h_length);
-     
+    
+    // Address conversion: Host to Network Short
     serveraddr.sin_port = htons(PORT);
      
     if (connect(tcpSocket, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
         printf("\nError Connecting");
     else
         printf("\nSuccessfully Connected");
-   
-    bzero(request, 1000);
+
+
+    bzero(request, MAX_REQUEST_LENGTH);
  
     sprintf(request, "GET %s HTTP/1.1\r\nHost:%s\r\n\r\n", secondHalf, firstHalf);
      
