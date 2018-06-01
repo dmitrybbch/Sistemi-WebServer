@@ -10,9 +10,7 @@
 #include <arpa/inet.h>
 
 #define MAX_REQUEST_LENGTH 8192
-
 #define PORT 80
-
 #define FILE_TO_REQUEST "index.html"
 
 int main(int argc, char** argv) {
@@ -23,10 +21,11 @@ int main(int argc, char** argv) {
     char request[MAX_REQUEST_LENGTH];
 
     struct hostent *server;
-    struct sockaddr_in serveraddr;
+    struct sockaddr_in serveraddr; // Struct that represents an internet address
 
     strcpy(arg, argv[1]);
 
+    // Dividing the first argument in host and file
     int i;
     for (i = 0; i < strlen(arg); i++){
         if (arg[i] == '/'){
@@ -35,41 +34,37 @@ int main(int argc, char** argv) {
                 break;
         }     
     }
-     
     for (i; i < strlen(arg); i++){
         strcat(secondHalf, &arg[i]);
         break;
     }
      
+    // Logging the result
     printf("\nFirst Half: %s", firstHalf);
     printf("\nSecond Half: %s", secondHalf);
-     
-    int tcpSocket = socket(AF_INET, SOCK_STREAM, 0);
 
+    // Opening the socket
+    int tcpSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (tcpSocket < 0)  printf("\nError opening socket!");
     else                printf("\nSuccessfully opened socket.");
-     
+    
+    // Getting the server and printing relevant info
     server = gethostbyname(firstHalf);
-     
     if (server == NULL)
-    {
         printf("gethostbyname() failed\n");
-    }
-    else
-    {
+    else {
         printf("\n%s = ", server->h_name);
         unsigned int j = 0;
-        while (server -> h_addr_list[j] != NULL)
-        {
+        while (server -> h_addr_list[j] != NULL){
             printf("%s", inet_ntoa(*(struct in_addr*)(server -> h_addr_list[j])));
             j++;
         }
     }
-     
     printf("\n");
- 
+
+    //Zeroing the server address for some reasong
     bzero((char *) &serveraddr, sizeof(serveraddr));
-    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_family = AF_INET; // Sets the type of address to IPV4 (?)
  
     bcopy((char *)server->h_addr_list[0], (char *)&serveraddr.sin_addr.s_addr, server->h_length);
      
