@@ -5,7 +5,7 @@
 
 #include <sys/types.h>  //non ricordo cosa conteneva
 #include <sys/socket.h> // Robe per gestione di socket
-#include <netinet/in.h> // NOn ricordo immagino serva per la connessione
+#include <netinet/in.h> // Non ricordo immagino serva per la connessione
 #include <unistd.h>     //Non ricordo neanche quella
 #include <pthread.h>
 #include <netdb.h>
