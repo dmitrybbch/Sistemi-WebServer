@@ -4,24 +4,27 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include "C-Thread-Pool-master/thpool.h"
 #include <pthread.h>
 
-#include "C-Thread-Pool-master/thpool.h"
+#define PORT 10000      //porta del server
 
-#define PORT "10000"       //porta del server
-
-void thMasterFunction(pthread_t *thread, pthread_attr_t *attr, void *(*start_routine)(void *)){
-
+void thMasterFunction(){
+    //routine del thread master
 }
 
-int main(int argc, char **argv){
-    pid_t pchild = fork();      //dubito di dover fare il fork subito subito, ripensaci
+int main(int argc, char *argv[]){
+    //creo il thread master come prima cosa
+    pthread_t thMaster;
+    pthread_create(&thMaster, NULL, &thMasterFunction, NULL); //poi vediamo gli argomenti in caso
+    pid_t pchild = fork();      //facciamo il fork dopo che il server è pronto a ricevere richieste
     if(pchild == 0){
         //codice del figlio
-        int masterSocket = socket(AF_INET, SOCK_STREAM, 0);
+        int sock = socket(AF_INET, SOCK_STREAM, 0);
     }
     else{
-        //codice del padre
+        printf("Errore nell'avvio del server.\n");
+        return(EXIT_FAILURE);
     }
-    exit(0);
+    return 0;
 }
