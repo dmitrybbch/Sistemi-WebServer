@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     // Opening the socket
     int tcpSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (tcpSocket < 0)  printf("\nError opening socket!");
-    else                printf("\nSuccessfully opened socket.");
+    else                printf("\nSuccessfully opened socket: %d", tcpSocket);
     
     // Getting the server and printing relevant info
     server = gethostbyname(firstHalf);
@@ -71,19 +71,23 @@ int main(int argc, char** argv) {
     
     // Address conversion: Host to Network Short
     serveraddr.sin_port = htons(PORT);
-     
+    
+    // Actually connecting to the server
     if (connect(tcpSocket, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
-        printf("\nError Connecting");
+        printf("\nError Connecting!!");
     else
-        printf("\nSuccessfully Connected");
+        printf("\nSuccessfully Connected.");
 
-
+    // Zeroing the request variable 
     bzero(request, MAX_REQUEST_LENGTH);
- 
+    
+    // Putting the formatted text in the request variable
     sprintf(request, "GET %s HTTP/1.1\r\nHost:%s\r\n\r\n", secondHalf, firstHalf);
-     
+    
+    // Logging the request text before sending it to the server
     printf("\n%s", request);
-     
+    
+    
     if (send(tcpSocket, request, strlen(request), 0) < 0)
         printf("Error with send()");
     else
