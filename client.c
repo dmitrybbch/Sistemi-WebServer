@@ -11,6 +11,7 @@
 #include <netdb.h>
 
 #define MAX_REQUEST_LENGTH 8192
+
 #define SERVER DEQRF
 #define PORT 10000
 

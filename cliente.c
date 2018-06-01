@@ -2,54 +2,52 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
- 
-/*
- * 
- */
+
+#define MAX_REQUEST_LENGTH 8192
+
+#define PORT 80
+
+#define FILE_TO_REQUEST "index.html"
+
 int main(int argc, char** argv) {
-     
-    char arg[500];
-    char firstHalf[500];
-    char secondHalf[500];
-    char request[1000];
+
+    char arg[MAX_REQUEST_LENGTH/2];
+    char firstHalf[MAX_REQUEST_LENGTH/2];
+    char secondHalf[MAX_REQUEST_LENGTH/2];
+    char request[MAX_REQUEST_LENGTH];
+
     struct hostent *server;
     struct sockaddr_in serveraddr;
-    int port = 80;
-     
+
     strcpy(arg, argv[1]);
-     
+
     int i;
-    for (i = 0; i < strlen(arg); i++)
-    {
-        if (arg[i] == '/')
-        {
+    for (i = 0; i < strlen(arg); i++){
+        if (arg[i] == '/'){
                 strncpy(firstHalf, arg, i);
                 firstHalf[i] = '\0';
                 break;
         }     
     }
      
-    for (i; i < strlen(arg); i++)
-    {
+    for (i; i < strlen(arg); i++){
         strcat(secondHalf, &arg[i]);
         break;
     }
      
     printf("\nFirst Half: %s", firstHalf);
-     
     printf("\nSecond Half: %s", secondHalf);
      
     int tcpSocket = socket(AF_INET, SOCK_STREAM, 0);
-     
-    if (tcpSocket < 0)
-        printf("\nError opening socket");
-    else
-        printf("\nSuccessfully opened socket");
+
+    if (tcpSocket < 0)  printf("\nError opening socket!");
+    else                printf("\nSuccessfully opened socket.");
      
     server = gethostbyname(firstHalf);
      
@@ -75,7 +73,7 @@ int main(int argc, char** argv) {
  
     bcopy((char *)server->h_addr_list[0], (char *)&serveraddr.sin_addr.s_addr, server->h_length);
      
-    serveraddr.sin_port = htons(port);
+    serveraddr.sin_port = htons(PORT);
      
     if (connect(tcpSocket, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
         printf("\nError Connecting");
