@@ -8,25 +8,25 @@
 #include <pthread.h>
 
 #define PORT 10000      //porta del server
+#define SERVER_PROTOCOL "HTTP/1.1"
 
 void init(){
-    thMasterFunction();
-}
-
-//Routine del thread master
-void thMasterFunction(){
-    //creo il thread master come prima cosa
-    pthread_t thMaster;
-    pthread_create(&thMaster, NULL, &thMasterFunction, NULL); //poi vediamo gli argomenti in caso
+    pthread_t thMaster; //istanzio il thread master
+    pthread_create(&thMaster, NULL, &thMasterFunction, NULL); //gli argomenti li rivedremo
     pid_t pchild = fork();      //facciamo il fork dopo che il server è pronto a ricevere richieste
     if(pchild == 0){
         //codice del figlio
-        int sock = socket(AF_INET, SOCK_STREAM, 0);
+        int sock = socket(AF_INET, SOCK_STREAM, SERVER_PROTOCOL);
     }
     else{
         printf("Error in the server setup.\n");
         return(EXIT_FAILURE);
     }
+}
+
+//Routine del thread master
+void thMasterFunction(){
+    
 }
 
 int main(int argc, char *argv[]){
