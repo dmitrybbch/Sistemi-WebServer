@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 
 #define MAX_REQUEST_LENGTH 8192
-#define PORT 80
+#define PORT 10000
 #define FILE_TO_REQUEST "index.html"
 
 int main(int argc, char** argv) {

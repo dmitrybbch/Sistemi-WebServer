@@ -8,6 +8,9 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include <sys/stat.h>
+#include <sys/sendfile.h>
+
 #define EOL "\r\n"
 #define EOL_SIZE 2
 
