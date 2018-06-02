@@ -9,11 +9,12 @@
 
 #define PORT 10000      //porta del server
 
-void thMasterFunction(){
-    //routine del thread master
+void init(){
+    thMasterFunction();
 }
 
-int main(int argc, char *argv[]){
+//Routine del thread master
+void thMasterFunction(){
     //creo il thread master come prima cosa
     pthread_t thMaster;
     pthread_create(&thMaster, NULL, &thMasterFunction, NULL); //poi vediamo gli argomenti in caso
@@ -26,5 +27,10 @@ int main(int argc, char *argv[]){
         printf("Errore nell'avvio del server.\n");
         return(EXIT_FAILURE);
     }
-    return 0;
+}
+
+int main(int argc, char *argv[]){
+    init();
+    
+    return (EXIT_SUCCESS);
 }

@@ -87,19 +87,23 @@ int main(int argc, char** argv) {
     // Logging the request text before sending it to the server
     printf("\n%s", request);
     
-    
+    // Actually sending the request to the server
     if (send(tcpSocket, request, strlen(request), 0) < 0)
         printf("Error with send()");
     else
-        printf("Successfully sent html fetch request");
+        printf("Successfully sent HTML request.");
      
-    bzero(request, 1000);
-     
+    // Zeroing the request AGAIN
+    bzero(request, MAX_REQUEST_LENGTH);
+    
+    // Receive and printf the server's response
     recv(tcpSocket, request, 999, 0);
     printf("\n%s", request);
-    printf("\nhello");
-     
+    printf("\nEnd.\n");
+    
+    // Close the socket
     close(tcpSocket);
      
     return (EXIT_SUCCESS);
 }
+

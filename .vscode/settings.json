@@ -3,6 +3,7 @@
         "unistd.h": "c",
         "types.h": "c",
         "in.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "cstdlib": "c"
     }
 }
