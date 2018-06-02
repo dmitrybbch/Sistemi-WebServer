@@ -24,13 +24,13 @@ void thMasterFunction(){
         int sock = socket(AF_INET, SOCK_STREAM, 0);
     }
     else{
-        printf("Errore nell'avvio del server.\n");
+        printf("Error in the server setup.\n");
         return(EXIT_FAILURE);
     }
 }
 
 int main(int argc, char *argv[]){
     init();
-    
+
     return (EXIT_SUCCESS);
 }
