@@ -32,8 +32,16 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include "C-Thread-Pool-master/thpool.h"
 #include <pthread.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/sendfile.h>
+
+#include "C-Thread-Pool-master/thpool.h"
 
 #define PORT 10000      //porta del server
 #define SERVER_PROTOCOL "HTTP/1.1"
@@ -41,20 +49,12 @@
 #define EOL "\r\n"
 #define EOL_SIZE 2
 
+void error(const char *msg) {
+    perror(msg);
+    exit(1);
+}
+
 void init(){
-    /*
-    pthread_t thMaster; //istanzio il thread master
-    pthread_create(&thMaster, NULL, &thMasterFunction, NULL); //gli argomenti li rivedremo
-    pid_t pchild = fork();      //facciamo il fork dopo che il server è pronto a ricevere richieste
-    if(pchild == 0){
-        //codice del figlio
-        int sock = socket(AF_INET, SOCK_STREAM, SERVER_PROTOCOL);
-    }
-    else{
-        printf("Error in the server setup.\n");
-        return(EXIT_FAILURE);
-    }
-    */
 }
 
 int main(int argc, char *argv[]){
@@ -78,6 +78,7 @@ int main(int argc, char *argv[]){
     clilen = sizeof(cli_addr);
 
     
+
 
     return (EXIT_SUCCESS);
 }
