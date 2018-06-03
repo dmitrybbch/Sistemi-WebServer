@@ -4,7 +4,9 @@
         "types.h": "c",
         "in.h": "c",
         "stdlib.h": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "socket.h": "c",
+        "fcntl.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

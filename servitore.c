@@ -226,8 +226,8 @@ int connection(int fd) {
 
 int main(int argc, char *argv[]) {
     int sockfd, newsockfd, portno, pid;
-    socklen_t clilen;
-    struct sockaddr_in serv_addr, cli_addr;
+    socklen_t clilen; // Size of address
+    struct sockaddr_in serv_addr, cli_addr; // Addresses
 
     if (argc < 2) {
         fprintf(stderr, "ERROR, no port provided\n");
@@ -255,7 +255,7 @@ process for each connection.
             error("ERROR on accept");
         pid = fork();
         if (pid < 0)
-        error("ERROR on fork");
+            error("ERROR on fork");
         if (pid == 0) {
             close(sockfd);
             connection(newsockfd);
