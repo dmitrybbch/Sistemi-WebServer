@@ -69,14 +69,15 @@ int main(int argc, char *argv[]){
         error("Error opening socket!");
     bzero((char *) &serv_addr, sizeof(serv_addr)); // Zeroes serv_addr
 
-    portno = atoi(PORT);  // Conversion of port number
-    serv_addr.sin_family = AF_INET;  // Se
+    serv_addr.sin_family = AF_INET;  // IPv4
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(portno);
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-        error("ERROR on binding");
-    listen(sockfd, 5);
+    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)  // Give the socket's FD his local address
+        error("Error on binding!");
+    listen(sockfd, 5);  
     clilen = sizeof(cli_addr);
+
+    
 
     return (EXIT_SUCCESS);
 }
