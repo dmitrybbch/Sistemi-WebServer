@@ -4,7 +4,8 @@
  *      Crea un socket per l'ascolto
  *      Chiama listen() per prepararsi a ricevere
  * 
- * while (1) {
+ * 
+    while (1) {
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0)
             error("ERROR on accept");
@@ -63,13 +64,13 @@ int main(int argc, char *argv[]){
     socklen_t clilen; // Size of address
     struct sockaddr_in serv_addr, cli_addr; // Addresses
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0); // Opening socket
     if (sockfd < 0)
-        error("ERROR opening socket");
-    bzero((char *) &serv_addr, sizeof(serv_addr));
+        error("Error opening socket!");
+    bzero((char *) &serv_addr, sizeof(serv_addr)); // Zeroes serv_addr
 
-    portno = atoi(argv[1]);
-    serv_addr.sin_family = AF_INET;
+    portno = atoi(PORT);  // Conversion of port number
+    serv_addr.sin_family = AF_INET;  // Se
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(portno);
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
