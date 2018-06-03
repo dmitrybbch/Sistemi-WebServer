@@ -60,6 +60,8 @@ void init(){
 int main(int argc, char *argv[]){
 
     // Initialization
+    threadpool tpool = thpool_init(2);  // Initializing the threadpool
+
     int sockfd, newsockfd, portno, pid;
     socklen_t clilen; // Size of address
     struct sockaddr_in serv_addr, cli_addr; // Addresses
@@ -78,6 +80,15 @@ int main(int argc, char *argv[]){
     clilen = sizeof(cli_addr);
 
 
+    while (1) {
+        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+        if (newsockfd < 0)
+            error("ERROR on accept");
+        
+
+    } /* end of while */
+    close(sockfd);
+    return 0; /* we never get here */
 
     return (EXIT_SUCCESS);
 }
