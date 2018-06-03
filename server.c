@@ -77,7 +77,6 @@ int main(int argc, char *argv[]){
     listen(sockfd, 5);  
     clilen = sizeof(cli_addr);
 
-    
 
 
     return (EXIT_SUCCESS);
