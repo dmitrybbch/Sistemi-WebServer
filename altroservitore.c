@@ -1,291 +1,280 @@
-#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <string.h>
 #include <unistd.h>
-#include <sys/types.h> 
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-#include <malloc.h>
-#include <fcntl.h>  
-#include <sys/mman.h>      
-#include <sys/stat.h> 
-//#include <time.h>
-#include <semaphore.h>
-#define BUFSIZE 1024
-#define MAXERS 16
+#include <fcntl.h>
+#include <errno.h>
 
-#define OK_IMAGE    "HTTP/1.0 200 OK\nContent-Type:image/gif\n\n"
-#define OK_TEXT     "HTTP/1.0 200 OK\nContent-Type:text/html\n\n"
-#define NOTOK_404   "HTTP/1.0 404 Not Found\nContent-Type:text/html\n\n"
-#define MESS_404    "<html><body><h1>ERROR 404, FILE NOT FOUND</h1></body></html>"
+#include <sys/stat.h>
+#include <sys/sendfile.h>
 
-char *ROOT;
-extern char **environ;
+#define EOL "\r\n"
+#define EOL_SIZE 2
 
-pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t master_mutex=PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
+typedef struct {
+ char *ext;
+ char *mediatype;
+} extn;
 
-struct richiesta
-{
-	int acceptfd;
-	int size;
-	char file_name[1024];
-	int cli_ipaddr;
-	char in_buf[2048];
-	//struct richiesta *next;
-
-};
-
-void *datasend(void*conn)
-{
-
-	char out_buf[BUFSIZE];
-	char *file_name;
-	int acceptfd=*(int*)conn;                 
-	//struct richiesta p;
-	//p.acceptfd = acceptfd;
-
-
-	//memset(out_buf, 0, sizeof(out_buf));
-
-	pthread_mutex_unlock(&mutex);
-	int re;
-	//if (re=	recv(acceptfd, out_buf, BUFSIZE, 0)<0)
-	//	printf("errore della receive\n");
-
-	pthread_cond_wait(&cond_var, &mutex);
-	pthread_mutex_lock(&mutex);
-
-
-
-	pthread_cond_signal(&cond_var);
-
+//Possible media types
+extn extensions[] ={
+ {"gif", "image/gif" },
+ {"txt", "text/plain" },
+ {"jpg", "image/jpg" },
+ {"jpeg","image/jpeg"},
+ {"png", "image/png" },
+ {"ico", "image/ico" },
+ {"zip", "image/zip" },
+ {"gz",  "image/gz"  },
+ {"tar", "image/tar" },
+ {"htm", "text/html" },
+ {"html","text/html" },
+ {"php", "text/html" },
+ {"pdf","application/pdf"},
+ {"zip","application/octet-stream"},
+ {"rar","application/octet-stream"},
+ {0,0} };
 
 /*
-	if (fd1 == -1)
-    {
-    	/* ERRORE 404 */
-/*
-		printf("Errore lettura del file %s \n", &file_name[1]);
-		strcpy(out_buf, NOTOK_404);
-		send(acceptfd, out_buf, strlen(out_buf), 0);
-        strcpy(out_buf, MESS_404);
-		send(acceptfd, out_buf, strlen(out_buf), 0);
-	}
-    else
-    {
-        printf("Il file %s e' stato inviato \n", &file_name[1]);
-        if ((strstr(file_name, ".jpg") != NULL)||(strstr(file_name, ".gif") != NULL)) 
-        { 
-        	strcpy(out_buf, OK_IMAGE); 
-        }
-
-		else
-        { 
-        	strcpy(out_buf, OK_TEXT); 
-        }
-      	send(acceptfd, out_buf, strlen(out_buf), 0);
-    }
-*/
-
-	//p.size= dimensione_file;
-	//p.file_name= nome_file;
-	//mutex unlock
-	
-
-	//signal
+ A helper function
+ */
+void error(const char *msg) {
+    perror(msg);
+    exit(1);
 }
 
-int main(int argc, char *args[])
-{
-	int port	=	8080;
-	int threadnum = 1;
-	int time_flag =	0;
-	int sleep_time=	0;
-	int sched_flag=	0;
-	int connfd, acceptfd;
-	int i;
-	int is_static;
-	char in_buffer[BUFSIZE];
-	char out_buffer[BUFSIZE];
-	char filename[BUFSIZE];
-	char filetype[BUFSIZE];
-	char cgiargs[BUFSIZE];
-	char uri[BUFSIZE];
-	char method[BUFSIZE];
-	char version[BUFSIZE];
-	char *p;
-	struct sockaddr_in serveraddr, clientaddr;
-	struct stat sbuf;
-	pthread_t thread_id;
-
-
-	for(i=0;i<argc;i++)
-	{
-		if(strcmp(args[i],"-n")==0)
-		{
-			threadnum=atoi(args[i+1]);
-		}
-		else if(strcmp(args[i],"-p")==0)
-		{
-			port=atoi(args[i+1]);
-		}
-		else if(strcmp(args[i],"-t")==0)
-		{
-			time_flag=1;		
-		 	sleep_time=atoi(args[i+1]);
-		}
-		else if(strcmp(args[i],"-s")==0)
-		{
-			if (strcmp(args[i+1],"FCFS")==0)		
-				sched_flag=0;
-			else if(args[i+1],"SJF")
-				sched_flag=1;
-			else
-				printf("Please enter a proper scheduling algorithm");
-		}
-	
-	}
-
-
-	/* Creazione Threads */
 /*
-	for (i=0;i<threadnum;i++)
-		if(pthread_create(&thread_id, NULL, &datasend, (void*)&acceptfd)<0)
-			printf("errore nella creazione del thread\n");
+A helper function
 */
-	/* Connessione */
-	connfd = socket(AF_INET, SOCK_STREAM,0);
+int get_file_size(int fd) {
+    struct stat stat_struct;
+    if (fstat(fd, &stat_struct) == -1)
+        return (1);
+    return (int) stat_struct.st_size;
+}
 
-	if (connfd<0)
-		printf("errore di apertura socket\n");
-	else
-		printf("socket aperto\n");
-	bzero((char*)&serveraddr,sizeof(serveraddr));
+/*
+ A helper function
+ */
+void send_new(int fd, char *msg) {
+    int len = strlen(msg);
+    if (send(fd, msg, len, 0) == -1) {
+        printf("Error in send\n");
+    }
+}
 
-	serveraddr.sin_family = 	AF_INET;
-	serveraddr.sin_addr.s_addr=	INADDR_ANY;
-	serveraddr.sin_port = 		htons(port);
+/*
+ This function recieves the buffer
+ until an "End of line(EOL)" byte is recieved
+ */
+int recv_new(int fd, char *buffer) {
+    char *p = buffer; // Use of a pointer to the buffer rather than dealing with the buffer directly
+    int eol_matched = 0; // Use to check whether the recieved byte is matched with the buffer byte or not
 
-	if (bind(connfd, (struct sockaddr*)&serveraddr,sizeof(serveraddr))<0)
-		printf("errore nella bind\n");
-	else
-		printf("bind effettuata\n");
+    // Start receiving 1 byte at a time
+    while (recv(fd, p, 1, 0) != 0) {
+        // if the byte matches with the first eol byte that is '\r'
+        if (*p == EOL[eol_matched]) {
+            ++eol_matched;
 
-	if (listen(connfd,5)<0)
-		printf("errore nella listen\n");
-	else
-		printf("listen effettuata\n");
+        // if both the bytes matches with the EOL
+        if (eol_matched == EOL_SIZE) {
+            *(p + 1 - EOL_SIZE) = '\0'; // End the string
+            return (strlen(buffer)); // Return the bytes recieved
+        }
+        } else {
+            eol_matched = 0;
+        }
 
-	int clientlen=sizeof(clientaddr);
-	
-	while (1)
-	{
-		//pthread_cond_wait(&cond_var, &master_mutex);
-		acceptfd = accept(connfd, (struct sockaddr*)&clientaddr, &clientlen);
-		if (acceptfd<0)
-			printf("errore nell'accept\n");
-		else
-			printf("accept effettuata\n");
+        p++; // Increment the pointer to receive next byte
+    }
+    return (0);
+}
 
-		//read(acceptfd, in_buffer, BUFSIZE);
-		FILE *stream;
-		if ((stream = fdopen(acceptfd, "r+")) == NULL)
-      		error("ERROR on fdopen");
-      	else
-      		printf("stream aperto\n");
+/*
+A helper function: Returns the
+web root location.
+*/
+char* webroot() {
+    /*
+    // open the file "conf" for reading
+    FILE *in = fopen("conf", "rt");
+    // read the first line from the file
+    char buff[1000];
+    fflush(stdout);
+    fgets(buff, 1000, in);  // Non stampa un cazzo dopo questa funzione
+    printf("\n\nDebug 2:.\n");
+    // close the stream
+    fclose(in);
+    char* nl_ptr = strrchr(buff, '\n');
+    if (nl_ptr != NULL)
+        *nl_ptr = '\0';
+    
+    return strdup(buff);
+    */
+    //char www[] = "/var/www/html";
+    return "/var/www/html/";
+}
 
+/*
+ Handles php requests
+*/
+void php_cgi(char* script_path, int fd) {
+    send_new(fd, "HTTP/1.1 200 OK\n Server: Web Server in C\n Connection: close\n");
+    dup2(fd, STDOUT_FILENO);
+    char script[500];
+    strcpy(script, "SCRIPT_FILENAME=");
+    strcat(script, script_path);
+    putenv("GATEWAY_INTERFACE=CGI/1.1");
+    putenv(script);
+    putenv("QUERY_STRING=");
+    putenv("REQUEST_METHOD=GET");
+    putenv("REDIRECT_STATUS=true");
+    putenv("SERVER_PROTOCOL=HTTP/1.1");
+    putenv("REMOTE_HOST=127.0.0.1");
+    execl("/usr/bin/php-cgi", "php-cgi", NULL);
+}
 
-	    /* get the HTTP request line */
-	    fgets(in_buffer, BUFSIZE, stream);
-	    printf("%s", in_buffer);
-	    sscanf(in_buffer, "%s %s %s\n", method, uri, version);
+/*
+This function parses the HTTP requests,
+arrange resource locations,
+check for supported media types,
+serves files in a web root,
+sends the HTTP error codes.
+*/
+int connection(int fd) {
+    char request[500], resource[500], *ptr;
+    int fd1, length;
 
-	    /* read (and ignore) the HTTP headers */
-	    fgets(in_buffer, BUFSIZE, stream);
-	    printf("%s", in_buffer);
-	    while(strcmp(in_buffer, "\r\n")) {
-	      fgets(in_buffer, BUFSIZE, stream);
-	      printf("%s", in_buffer);
-	    }
+    if (recv_new(fd, request) == 0)
+        printf("Receive Failed\n");
+    printf("%s\n", request);
+    // Check for a valid browser request
+    ptr = strstr(request, " HTTP/");
+    
+    if (ptr == NULL) {
+        printf("NOT HTTP !\n");
+    } else {
+        *ptr = 0;
+        ptr = NULL;
 
-/* CODICE UFO */
- 
-	    if (!strstr(uri, "cgi-bin")) 
-	    {
-	      is_static = 1;
-	      strcpy(cgiargs, "");
-	      strcpy(filename, ".");
-	      strcat(filename, uri);
-	      if (uri[strlen(uri)-1] == '/') 
-			strcat(filename, "diocaro.html");
-	    }
-	    else 
-	    {
-	      is_static = 0;
-	      p = index(uri, '?');
-	      if (p) 
-	      {
-		     strcpy(cgiargs, p+1);
-		     *p = '\0';
-	      }
-	      else 
-	      {
-		     strcpy(cgiargs, "");
-	      }
-	      strcpy(filename, ".");
-	      strcat(filename, uri);
-	    }
-    /* FINE CODICE ANDREA */
+        if (strncmp(request, "GET ", 4) == 0) {
+            ptr = request + 4;
+        }
+        if (ptr == NULL) {
+            printf("Unknown Request ! \n");
+        } else {
+            if (ptr[strlen(ptr) - 1] == '/') {
+                strcat(ptr, "index.html");
+            }
+            printf("Debug:.\n");
+            strcpy(resource, webroot());
+            strcat(resource, ptr);
+            
+            
 
-	    /* ERROR 404 */
-	    if (stat(filename, &sbuf) < 0) {
-	      fprintf(stream, "%s\n",NOTOK_404 );
-	      //cerror(stream, filename, "404", "Not found", "Tiny couldn't find this file");
-	      fclose(stream);
-	      close(acceptfd);
-	      continue;
-	    }
+            char* s = strchr(ptr, '.');
+            int i;
+            for (i = 0; extensions[i].ext != NULL; i++) {
+                if (strcmp(s + 1, extensions[i].ext) == 0) {
+                    fd1 = open(resource, O_RDONLY, 0);
+                    printf("Opening \"%s\"\n", resource);
+                    if (fd1 == -1) {
+                        printf("404 File not found Error\n");
+                        send_new(fd, "HTTP/1.1 404 Not Found\r\n");
+                        send_new(fd, "Server : Web Server in C\r\n\r\n");
+                        send_new(fd, "<html><head><title>404 Not Found</head></title>");
+                        send_new(fd, "<body><p>404 Not Found: The requested resource could not be found!</p></body></html>");
+                        //Handling php requests
+                    } else if (strcmp(extensions[i].ext, "php") == 0) {
+                        php_cgi(resource, fd);
+                        sleep(1);
+                        close(fd);
+                        exit(1);
+                    } else {
+                        printf("200 OK, Content-Type: %s\n\n",
+                        extensions[i].mediatype);
+                        send_new(fd, "HTTP/1.1 200 OK\r\n");
+                        send_new(fd, "Server : Web Server in C\r\n\r\n");
+                        // if it is a GET request
+                        if (ptr == request + 4){
+                            if ((length = get_file_size(fd1)) == -1)
+                                printf("Error in getting size !\n");
+                            size_t total_bytes_sent = 0;
+                            ssize_t bytes_sent;
+                            while (total_bytes_sent < length) {
+                            //Zero copy optimization
+                                if ((bytes_sent = sendfile(fd, fd1, 0, length - total_bytes_sent)) <= 0) {
+                                    if (errno == EINTR || errno == EAGAIN) {
+                                        continue;
+                                    }
+                                    perror("sendfile");
+                                    return -1;
+                                }
+                                total_bytes_sent += bytes_sent;
+                            }
 
-	    /* serve static content */
-	    if (is_static) 
-	    {
-	      if (strstr(filename, ".html"))
-		     strcpy(filetype, "text/html");
-	      else if (strstr(filename, ".gif"))
-		     strcpy(filetype, "image/gif");
-	      else if (strstr(filename, ".jpg"))
-		     strcpy(filetype, "image/jpg");
-	      else 
-		     strcpy(filetype, "text/plain");
-		 }
+                        }
+                    }
+                    break;
+                }
+                int size = sizeof(extensions) / sizeof(extensions[0]);
+                if (i == size - 2) {
+                    printf("415 Unsupported Media Type\n");
+                    send_new(fd, "HTTP/1.1 415 Unsupported Media Type\r\n");
+                    send_new(fd, "Server : Web Server in C\r\n\r\n");
+                    send_new(fd, "<html><head><title>415 Unsupported Media Type</head></title>");
+                    send_new(fd, "<body><p>415 Unsupported Media Type!</p></body></html>");
+                }
+            }
 
-		 /* INVIA TESTO */
-        sprintf(out_buffer, OK_TEXT);
-      	write(acceptfd, out_buffer, BUFSIZE);
-        sprintf(out_buffer, "<html> <body> hello world </body> </html>");
-      	write(acceptfd, out_buffer, BUFSIZE);
-		close(acceptfd);
-		
-		/* CODICE UFO */
-		close(0);
-		dup2(acceptfd, 1); /* map socket to stdout */
-		dup2(acceptfd, 2); /* map socket to stderr */
-		printf("\nfilename%s\n",filename );
-		if (execve(filename, NULL, environ) < 0) {
-	  		perror("ERROR in execve");
-		}
-		/*FINE CODICE ANDREA */
+            close(fd);
+        }
+    }
+    shutdown(fd, SHUT_RDWR);
+}
 
+int main(int argc, char *argv[]) {
+    int sockfd, newsockfd, portno, pid;
+    socklen_t clilen; // Size of address
+    struct sockaddr_in serv_addr, cli_addr; // Addresses
 
-		//pthread_cond_signal(&cond_var);
-		printf("thread chiuso\n");
-		//coda dei processi (SJF o FCFS)
-		
-	}
+    if (argc < 2) {
+        fprintf(stderr, "ERROR, no port provided\n");
+        exit(1);
+    }
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0)
+        error("ERROR opening socket");
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    portno = atoi(argv[1]);
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(portno);
+    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+        error("ERROR on binding");
+    listen(sockfd, 5);
+    clilen = sizeof(cli_addr);
+/*
+Server runs forever, forking off a separate
+process for each connection.
+*/
+    while (1) {
+        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+        if (newsockfd < 0)
+            error("ERROR on accept");
+        pid = fork();
+        if (pid < 0)
+            error("ERROR on fork");
+        if (pid == 0) {
+            close(sockfd);
+            connection(newsockfd);
+            exit(0);
+        } else  close(newsockfd);
+    } /* end of while */
+    close(sockfd);
+    return 0; /* we never get here */
 }

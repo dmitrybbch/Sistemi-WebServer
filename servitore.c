@@ -115,8 +115,8 @@ char* webroot() {
     
     return strdup(buff);
     */
-    char www[] = "/var/www/html";
-    return "/var/www/html/";  
+    //char www[] = "/var/www/html";
+    return "/var/www/html/";
 }
 
 /*
@@ -148,6 +148,7 @@ sends the HTTP error codes.
 int connection(int fd) {
     char request[500], resource[500], *ptr;
     int fd1, length;
+
     if (recv_new(fd, request) == 0)
         printf("Receive Failed\n");
     printf("%s\n", request);
@@ -172,7 +173,7 @@ int connection(int fd) {
             printf("Debug:.\n");
             strcpy(resource, webroot());
             strcat(resource, ptr);
-            fflush(stdout);
+            
             
 
             char* s = strchr(ptr, '.');
