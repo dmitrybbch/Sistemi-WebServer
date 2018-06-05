@@ -57,6 +57,11 @@ void error(const char *msg) {
 void init(){
 }
 
+void handleConnection(int* sockfd){
+    close(*sockfd);
+    printf("%d, blyat\n", *sockfd);
+}
+
 int main(int argc, char *argv[]){
 
     // Initialization
@@ -84,7 +89,7 @@ int main(int argc, char *argv[]){
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0)
             error("ERROR on accept");
-        
+        thpool_add_work(tpool, (void*)handleConnection, &sockfd);
 
     } /* end of while */
     close(sockfd);

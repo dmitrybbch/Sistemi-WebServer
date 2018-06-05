@@ -99,17 +99,24 @@ A helper function: Returns the
 web root location.
 */
 char* webroot() {
+    /*
     // open the file "conf" for reading
     FILE *in = fopen("conf", "rt");
     // read the first line from the file
     char buff[1000];
-    fgets(buff, 1000, in);
+    fflush(stdout);
+    fgets(buff, 1000, in);  // Non stampa un cazzo dopo questa funzione
+    printf("\n\nDebug 2:.\n");
     // close the stream
     fclose(in);
     char* nl_ptr = strrchr(buff, '\n');
     if (nl_ptr != NULL)
-    *nl_ptr = '\0';
+        *nl_ptr = '\0';
+    
     return strdup(buff);
+    */
+    char www[] = "/var/www/html";
+    return "/var/www/html/";  
 }
 
 /*
@@ -142,10 +149,11 @@ int connection(int fd) {
     char request[500], resource[500], *ptr;
     int fd1, length;
     if (recv_new(fd, request) == 0)
-        printf("Recieve Failed\n");
+        printf("Receive Failed\n");
     printf("%s\n", request);
     // Check for a valid browser request
     ptr = strstr(request, " HTTP/");
+    
     if (ptr == NULL) {
         printf("NOT HTTP !\n");
     } else {
@@ -161,8 +169,12 @@ int connection(int fd) {
             if (ptr[strlen(ptr) - 1] == '/') {
                 strcat(ptr, "index.html");
             }
+            printf("Debug:.\n");
             strcpy(resource, webroot());
             strcat(resource, ptr);
+            fflush(stdout);
+            
+
             char* s = strchr(ptr, '.');
             int i;
             for (i = 0; extensions[i].ext != NULL; i++) {
