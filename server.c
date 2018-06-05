@@ -49,6 +49,11 @@
 #define EOL "\r\n"
 #define EOL_SIZE 2
 
+typedef struct socketOldAndNew {
+    int socketFD;
+    int newSocketFD;
+} SockOldNew;
+
 void error(const char *msg) {
     perror(msg);
     exit(1);
@@ -57,42 +62,43 @@ void error(const char *msg) {
 void init(){
 }
 
-void handleConnection(int* sockfd){
-    close(*sockfd);
-    printf("%d, blyat\n", *sockfd);
+void handleConnection(SockOldNew* ss){
+    close(ss->socketFD);
+    printf("%d, blyat\n", ss->socketFD);
 }
 
 int main(int argc, char *argv[]){
 
     // Initialization
     threadpool tpool = thpool_init(2);  // Initializing the threadpool
-
-    int sockfd, newsockfd, portno, pid;
+    
+    SockOldNew sockOldNew; // Includes sockfd and newsockfd
+    int sockfd, newsockfd, pid;
     socklen_t clilen; // Size of address
     struct sockaddr_in serv_addr, cli_addr; // Addresses
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0); // Opening socket
-    if (sockfd < 0)
+    sockOldNew.socketFD = socket(AF_INET, SOCK_STREAM, 0); // Opening socket
+    if (sockOldNew.socketFD < 0)
         error("Error opening socket!");
     bzero((char *) &serv_addr, sizeof(serv_addr)); // Zeroes serv_addr
 
     serv_addr.sin_family = AF_INET;  // IPv4
     serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(portno);
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)  // Give the socket's FD his local address
+    serv_addr.sin_port = htons(PORT);
+    if (bind(sockOldNew.socketFD, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)  // Give the socket's FD his local address
         error("Error on binding!");
-    listen(sockfd, 5);  
+    listen(sockOldNew.socketFD, 4);  
     clilen = sizeof(cli_addr);
 
 
     while (1) {
-        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-        if (newsockfd < 0)
+        sockOldNew.newSocketFD = accept(sockOldNew.socketFD, (struct sockaddr *) &cli_addr, &clilen);
+        if (sockOldNew.newSocketFD < 0)
             error("ERROR on accept");
-        thpool_add_work(tpool, (void*)handleConnection, &sockfd);
+        thpool_add_work(tpool, (void*)handleConnection, &sockOldNew);
 
     } /* end of while */
-    close(sockfd);
+    close(sockOldNew.socketFD);
     return 0; /* we never get here */
 
     return (EXIT_SUCCESS);

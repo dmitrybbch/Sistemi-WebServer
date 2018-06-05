@@ -99,23 +99,7 @@ A helper function: Returns the
 web root location.
 */
 char* webroot() {
-    /*
-    // open the file "conf" for reading
-    FILE *in = fopen("conf", "rt");
-    // read the first line from the file
-    char buff[1000];
-    fflush(stdout);
-    fgets(buff, 1000, in);  // Non stampa un cazzo dopo questa funzione
-    printf("\n\nDebug 2:.\n");
-    // close the stream
-    fclose(in);
-    char* nl_ptr = strrchr(buff, '\n');
-    if (nl_ptr != NULL)
-        *nl_ptr = '\0';
     
-    return strdup(buff);
-    */
-    //char www[] = "/var/www/html";
     return "/var/www/html/";
 }
 
@@ -266,7 +250,7 @@ process for each connection.
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0)
             error("ERROR on accept");
-        pid = fork();
+        /*pid = fork();
         if (pid < 0)
             error("ERROR on fork");
         if (pid == 0) {
@@ -274,6 +258,7 @@ process for each connection.
             connection(newsockfd);
             exit(0);
         } else  close(newsockfd);
+		*/
     } /* end of while */
     close(sockfd);
     return 0; /* we never get here */
