@@ -1,0 +1,7 @@
+comando bello 1:
+
+gcc example.c thpool.c -D THPOOL_DEBUG -pthread example
+
+comando bello 2:
+
+gcc server.c C-Thread-Pool-master/thpool.c -D THPOOL_DEBUG -pthread -o server
