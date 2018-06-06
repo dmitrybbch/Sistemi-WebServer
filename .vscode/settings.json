@@ -8,7 +8,8 @@
         "socket.h": "c",
         "fcntl.h": "c",
         "thpool.h": "c",
-        "sendfile.h": "c"
+        "sendfile.h": "c",
+        "string.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
