@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "~/Documents/Projetti/C/Sistemi-WebServer/server",
+            "program": "/home/dmitry/Documents/Projetti/C/Sistemi-WebServer/server",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

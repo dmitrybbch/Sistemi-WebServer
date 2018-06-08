@@ -99,29 +99,13 @@ A helper function: Returns the
 web root location.
 */
 char* webroot() {
-    /*
-    // open the file "conf" for reading
-    FILE *in = fopen("conf", "rt");
-    // read the first line from the file
-    char buff[1000];
-    fflush(stdout);
-    fgets(buff, 1000, in);  // Non stampa un cazzo dopo questa funzione
-    printf("\n\nDebug 2:.\n");
-    // close the stream
-    fclose(in);
-    char* nl_ptr = strrchr(buff, '\n');
-    if (nl_ptr != NULL)
-        *nl_ptr = '\0';
-    
-    return strdup(buff);
-    */
-    //char www[] = "/var/www/html";
-    return "/var/www/html/";
+    return "/var/www/html";
 }
 
 /*
  Handles php requests
 */
+
 void php_cgi(char* script_path, int fd) {
     send_new(fd, "HTTP/1.1 200 OK\n Server: Web Server in C\n Connection: close\n");
     dup2(fd, STDOUT_FILENO);
@@ -170,11 +154,8 @@ int connection(int fd) {
             if (ptr[strlen(ptr) - 1] == '/') {
                 strcat(ptr, "index.html");
             }
-            printf("Debug:.\n");
             strcpy(resource, webroot());
             strcat(resource, ptr);
-            
-            
 
             char* s = strchr(ptr, '.');
             int i;
@@ -185,12 +166,12 @@ int connection(int fd) {
                     if (fd1 == -1) {
                         printf("404 File not found Error\n");
                         send_new(fd, "HTTP/1.1 404 Not Found\r\n");
-                        send_new(fd, "Server : Web Server in C\r\n\r\n");
+                        send_new(fd, "Serrrrver : Web Server in C\r\n\r\n");
                         send_new(fd, "<html><head><title>404 Not Found</head></title>");
                         send_new(fd, "<body><p>404 Not Found: The requested resource could not be found!</p></body></html>");
                         //Handling php requests
                     } else if (strcmp(extensions[i].ext, "php") == 0) {
-                        php_cgi(resource, fd);
+                        //php_cgi(resource, fd);
                         sleep(1);
                         close(fd);
                         exit(1);
@@ -198,7 +179,7 @@ int connection(int fd) {
                         printf("200 OK, Content-Type: %s\n\n",
                         extensions[i].mediatype);
                         send_new(fd, "HTTP/1.1 200 OK\r\n");
-                        send_new(fd, "Server : Web Server in C\r\n\r\n");
+                        //send_new(fd, "Server : Web Server in C\r\n\r\n");
                         // if it is a GET request
                         if (ptr == request + 4){
                             if ((length = get_file_size(fd1)) == -1)

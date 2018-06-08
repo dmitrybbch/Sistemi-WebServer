@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
         strcat(secondHalf, &arg[i]);
         break;
     }
-     
+    
     // Logging the result
     printf("\nFirst Half: %s", firstHalf);
     printf("\nSecond Half: %s", secondHalf);

@@ -87,7 +87,7 @@ void init(){
 }
 
 char* webroot() {
-    return "/var/www/html/";
+    return "/var/www/html";
 }
 /*
 A helper function
@@ -204,7 +204,7 @@ int handleConnection(SockOldNew* sockPointer){
                                     if (errno == EINTR || errno == EAGAIN) {
                                         continue;
                                     }
-                                    perror("sendfile");
+                                    perror("sendfile error");
                                     return -1;
                                 }
                                 total_bytes_sent += bytes_sent;
