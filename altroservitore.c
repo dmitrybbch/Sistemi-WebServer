@@ -11,6 +11,8 @@
 #include <sys/stat.h>
 #include <sys/sendfile.h>
 
+#include "C-Thread-Pool-master/thpool.h"
+
 #define EOL "\r\n"
 #define EOL_SIZE 2
 
@@ -32,7 +34,6 @@ extn extensions[] ={
  {"tar", "image/tar" },
  {"htm", "text/html" },
  {"html","text/html" },
- {"php", "text/html" },
  {"pdf","application/pdf"},
  {"zip","application/octet-stream"},
  {"rar","application/octet-stream"},
@@ -103,26 +104,6 @@ char* webroot() {
 }
 
 /*
- Handles php requests
-*/
-
-void php_cgi(char* script_path, int fd) {
-    send_new(fd, "HTTP/1.1 200 OK\n Server: Web Server in C\n Connection: close\n");
-    dup2(fd, STDOUT_FILENO);
-    char script[500];
-    strcpy(script, "SCRIPT_FILENAME=");
-    strcat(script, script_path);
-    putenv("GATEWAY_INTERFACE=CGI/1.1");
-    putenv(script);
-    putenv("QUERY_STRING=");
-    putenv("REQUEST_METHOD=GET");
-    putenv("REDIRECT_STATUS=true");
-    putenv("SERVER_PROTOCOL=HTTP/1.1");
-    putenv("REMOTE_HOST=127.0.0.1");
-    execl("/usr/bin/php-cgi", "php-cgi", NULL);
-}
-
-/*
 This function parses the HTTP requests,
 arrange resource locations,
 check for supported media types,
@@ -169,13 +150,8 @@ int connection(int fd) {
                         send_new(fd, "Serrrrver : Web Server in C\r\n\r\n");
                         send_new(fd, "<html><head><title>404 Not Found</head></title>");
                         send_new(fd, "<body><p>404 Not Found: The requested resource could not be found!</p></body></html>");
-                        //Handling php requests
-                    } else if (strcmp(extensions[i].ext, "php") == 0) {
-                        php_cgi(resource, fd);
-                        sleep(1);
-                        close(fd);
-                        exit(1);
-                    } else {
+                    }
+                    else {
                         printf("200 OK, Content-Type: %s\n\n",
                         extensions[i].mediatype);
                         char prova[500];
@@ -202,7 +178,6 @@ int connection(int fd) {
                                 }
                                 total_bytes_sent += bytes_sent;
                             }
-
                         }
                     }
                     break;
@@ -224,6 +199,8 @@ int connection(int fd) {
 }
 
 int main(int argc, char *argv[]) {
+    int numThread = 4;
+    threadpool tpool = thpool_init(numThread);
     int sockfd, newsockfd, portno, pid;
     socklen_t clilen; // Size of address
     struct sockaddr_in serv_addr, cli_addr; // Addresses
@@ -252,14 +229,9 @@ process for each connection.
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0)
             error("ERROR on accept");
-        pid = fork();
-        if (pid < 0)
-            error("ERROR on fork");
-        if (pid == 0) {
-            close(sockfd);
-            connection(newsockfd);
-            exit(0);
-        } else  close(newsockfd);
+        thpool_add_work(tpool, (void*)connection, &newsockfd);
+        exit(0);
+        
     } /* end of while */
     close(sockfd);
     return 0; /* we never get here */
