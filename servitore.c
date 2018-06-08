@@ -32,7 +32,6 @@ extn extensions[] ={
  {"tar", "image/tar" },
  {"htm", "text/html" },
  {"html","text/html" },
- {"php", "text/html" },
  {"pdf","application/pdf"},
  {"zip","application/octet-stream"},
  {"rar","application/octet-stream"},
@@ -177,7 +176,6 @@ int connection(int fd) {
                                 }
                                 total_bytes_sent += bytes_sent;
                             }
-
                         }
                     }
                     break;
