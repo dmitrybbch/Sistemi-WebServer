@@ -103,26 +103,6 @@ char* webroot() {
 }
 
 /*
- Handles php requests
-*/
-
-void php_cgi(char* script_path, int fd) {
-    send_new(fd, "HTTP/1.1 200 OK\n Server: Web Server in C\n Connection: close\n");
-    dup2(fd, STDOUT_FILENO);
-    char script[500];
-    strcpy(script, "SCRIPT_FILENAME=");
-    strcat(script, script_path);
-    putenv("GATEWAY_INTERFACE=CGI/1.1");
-    putenv(script);
-    putenv("QUERY_STRING=");
-    putenv("REQUEST_METHOD=GET");
-    putenv("REDIRECT_STATUS=true");
-    putenv("SERVER_PROTOCOL=HTTP/1.1");
-    putenv("REMOTE_HOST=127.0.0.1");
-    execl("/usr/bin/php-cgi", "php-cgi", NULL);
-}
-
-/*
 This function parses the HTTP requests,
 arrange resource locations,
 check for supported media types,
@@ -169,13 +149,8 @@ int connection(int fd) {
                         send_new(fd, "Serrrrver : Web Server in C\r\n\r\n");
                         send_new(fd, "<html><head><title>404 Not Found</head></title>");
                         send_new(fd, "<body><p>404 Not Found: The requested resource could not be found!</p></body></html>");
-                        //Handling php requests
-                    } else if (strcmp(extensions[i].ext, "php") == 0) {
-                        php_cgi(resource, fd);
-                        sleep(1);
-                        close(fd);
-                        exit(1);
-                    } else {
+                    }
+                    else {
                         printf("200 OK, Content-Type: %s\n\n",
                         extensions[i].mediatype);
                         char prova[500];
