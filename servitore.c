@@ -171,21 +171,26 @@ int connection(int fd) {
                         send_new(fd, "<body><p>404 Not Found: The requested resource could not be found!</p></body></html>");
                         //Handling php requests
                     } else if (strcmp(extensions[i].ext, "php") == 0) {
-                        //php_cgi(resource, fd);
+                        php_cgi(resource, fd);
                         sleep(1);
                         close(fd);
                         exit(1);
                     } else {
                         printf("200 OK, Content-Type: %s\n\n",
                         extensions[i].mediatype);
-                        send_new(fd, "HTTP/1.1 200 OK\r\n");
+                        char prova[500];
+                        sprintf(prova, "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-type: %s\r\nContent-length: %d\r\n\r\n", extensions[i].mediatype, get_file_size(fd1));
+                        send_new(fd, prova);
+                        //send_new(fd, "HTTP/1.1 200 OK\r\n");
                         //send_new(fd, "Server : Web Server in C\r\n\r\n");
                         // if it is a GET request
                         if (ptr == request + 4){
+                            
                             if ((length = get_file_size(fd1)) == -1)
                                 printf("Error in getting size !\n");
                             size_t total_bytes_sent = 0;
                             ssize_t bytes_sent;
+                            printf("Blyat\n");
                             while (total_bytes_sent < length) {
                             //Zero copy optimization
                                 if ((bytes_sent = sendfile(fd, fd1, 0, length - total_bytes_sent)) <= 0) {
