@@ -110,7 +110,9 @@ check for supported media types,
 serves files in a web root,
 sends the HTTP error codes.
 */
-int connection(int fd) {
+int connection(int* fdii){
+    int fd;
+    fd = *fdii;
     char request[500], resource[500], *ptr;
     int fd1, length;
 
@@ -230,7 +232,6 @@ process for each connection.
         if (newsockfd < 0)
             error("ERROR on accept");
         thpool_add_work(tpool, (void*)connection, &newsockfd);
-        exit(0);
         
     } /* end of while */
     close(sockfd);

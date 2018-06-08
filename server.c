@@ -273,7 +273,6 @@ int main(int argc, char **argv){
 
     } /* end of while */
     close(sockOldNew.socketFD);
-    return 0; /* we never get here */
 
     return (EXIT_SUCCESS);
 }
