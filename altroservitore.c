@@ -15,6 +15,7 @@
 
 #define EOL "\r\n"
 #define EOL_SIZE 2
+#define SERVER_PORT 10000
 
 typedef struct {
  char *ext;
@@ -202,38 +203,55 @@ int connection(int* fdii){
 
 int main(int argc, char *argv[]) {
     int numThread = 4;
-    threadpool tpool = thpool_init(numThread);
-    int sockfd, newsockfd, portno, pid;
-    socklen_t clilen; // Size of address
-    struct sockaddr_in serv_addr, cli_addr; // Addresses
-
-    if (argc < 2) {
-        fprintf(stderr, "ERROR, no port provided\n");
-        exit(1);
+    /*switch(argv[2]){
+        case 1:
+            numThread = 4;
+            break;
+        case 2:
+            numThread = argv[2];       //Lo switch lo usiamo?
+            break;
+        default:
+            printf("Nopenopenope\n");
+            break;
+    }*/
+    int sockfd, newsockfd, pid;
+    pid = fork();
+    if(pid < 0){
+        printf("ERROR on fork\n");
+        return EXIT_FAILURE;
     }
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-        error("ERROR opening socket");
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    portno = atoi(argv[1]);
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(portno);
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-        error("ERROR on binding");
-    listen(sockfd, 5);
-    clilen = sizeof(cli_addr);
-/*
-Server runs forever, forking off a separate
-process for each connection.
-*/
-    while (1) {
-        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-        if (newsockfd < 0)
-            error("ERROR on accept");
-        thpool_add_work(tpool, (void*)connection, &newsockfd);
-        
-    } /* end of while */
-    close(sockfd);
-    return 0; /* we never get here */
+    //codice del processo figlio
+    if(pid == 0){
+        threadpool tpool = thpool_init(numThread);
+        socklen_t clilen; // Size of address
+        struct sockaddr_in serv_addr, cli_addr; // Addresses
+
+        /*if (argc < 2) {
+            fprintf(stderr, "ERROR, no port provided\n");
+            exit(1);
+        }*/ 
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0)
+            error("ERROR opening socket");
+        bzero((char *) &serv_addr, sizeof(serv_addr));
+        //portno = atoi(argv[1]);           //non ci serve se definiamo la porta come costante
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_addr.s_addr = INADDR_ANY;
+        serv_addr.sin_port = htons(SERVER_PORT);
+        if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+            error("ERROR on binding");
+        listen(sockfd, 5);
+        clilen = sizeof(cli_addr);
+        /*
+        Server runs forever, adding work to the threadpool for each connection.
+        */
+        while (1) {
+            newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+            if (newsockfd < 0)
+                error("ERROR on accept");
+            thpool_add_work(tpool, (void*)connection, &newsockfd);
+        } /* end of while */
+        close(sockfd);
+        return 0; /* we never get here */
+    }
 }
