@@ -22,7 +22,6 @@
 #define WEB_ROOT "/var/www/html"
 #define N_THREAD 4
 
-
 typedef struct {
     char* mediatype;
     char* est;
