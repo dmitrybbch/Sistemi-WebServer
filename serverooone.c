@@ -182,13 +182,28 @@ int gestisci(int* fdII){
 int main(int argc, char* argv[]) {
     int numThread = N_THREAD;
 
-    int sockFD, newSockFD, pid;
+    int sockFD, newSockFD, pid, sid;
     pid = fork();
 
     if(pid < 0){
         errore("ERRORE: Errore nella fork.\n");
     }
-    if(pid == 0){  // ?? TEST: FORSE MEGLIO CON ELSE ??
+    if (pid > 0) {
+        //killa il padre
+        exit(EXIT_SUCCESS);
+    }
+
+    if (pid == 0) {
+    /*Il Session Id corrisponde al PID del processo che ha creato la sessione.
+    Una volta che la sessione viene terminata, tutti i processi collegati vengono
+    terminati dal kernel. Visto che non vogliamo ciò, avremo bisogno di un nuovo session
+    ID, e per farlo usiamo setsid (senza argomenti) che ritorna un nuovo sessione id*/
+    sid = setsid();
+    if (sid < 0) {
+        //esce se non puo cambiare il sid
+        exit(EXIT_FAILURE);
+    }
+
         threadpool tpool = thpool_init(numThread);
         socklen_t dim_cli;                       // Dimensione di un indirizzo
         struct sockaddr_in ind_serv, ind_cli; // Indirizzi
