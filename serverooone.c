@@ -185,52 +185,44 @@ int main(int argc, char* argv[]) {
     int sockFD, newSockFD, pid, sid;
     pid = fork();
 
-    if(pid < 0){
-        errore("ERRORE: Errore nella fork.\n");
-    }
-    if (pid > 0) {
-        //killa il padre
-        exit(EXIT_SUCCESS);
-    }
+    if (pid < 0) errore("ERRORE: Errore nella fork.\n");
+    if (pid > 0) exit(EXIT_SUCCESS);  //killa il padre
 
-    if (pid == 0) {
     /*Il Session Id corrisponde al PID del processo che ha creato la sessione.
     Una volta che la sessione viene terminata, tutti i processi collegati vengono
     terminati dal kernel. Visto che non vogliamo ciò, avremo bisogno di un nuovo session
     ID, e per farlo usiamo setsid (senza argomenti) che ritorna un nuovo sessione id*/
     sid = setsid();
-    if (sid < 0) {
-        //esce se non puo cambiare il sid
-        exit(EXIT_FAILURE);
-    }
+    if (sid < 0) exit(EXIT_FAILURE); //esce se non puo cambiare il sid
 
-        threadpool tpool = thpool_init(numThread);
-        socklen_t dim_cli;                       // Dimensione di un indirizzo
-        struct sockaddr_in ind_serv, ind_cli; // Indirizzi
+    // Se siamo nel thread figlio
+    threadpool tpool = thpool_init(numThread);
+    socklen_t dim_cli;                       // Dimensione di un indirizzo
+    struct sockaddr_in ind_serv, ind_cli; // Indirizzi
 
-        sockFD = socket(AF_INET, SOCK_STREAM, 0);
-        if(sockFD < 0)
-            errore("ERRORE: errore nell'apertura del socket.");
-        bzero((char*) &ind_serv, sizeof(ind_serv));
+    sockFD = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockFD < 0)
+        errore("ERRORE: errore nell'apertura del socket.");
+    bzero((char*) &ind_serv, sizeof(ind_serv));
 
-        ind_serv.sin_family = AF_INET;
-        ind_serv.sin_addr.s_addr = INADDR_ANY;
-        ind_serv.sin_port = htons(PORTA);
-        if(bind(sockFD, (struct sockaddr *) &ind_serv, sizeof(ind_serv)) < 0)
-            errore("ERRORE: errore sul binding.");
+    ind_serv.sin_family = AF_INET;
+    ind_serv.sin_addr.s_addr = INADDR_ANY;
+    ind_serv.sin_port = htons(PORTA);
+    if(bind(sockFD, (struct sockaddr *) &ind_serv, sizeof(ind_serv)) < 0)
+        errore("ERRORE: errore sul binding.");
+    
+    listen(sockFD, 5);  /// COS'È IL 5??
+    dim_cli = sizeof(ind_cli);
+
+    // Il server va avanti per sempre, aggiungendo lavoro al t.pool per ogni connessioone
+    while(1) {
+        newSockFD = accept(sockFD, (struct sockaddr *) &ind_cli, &dim_cli);
+        if( newSockFD < 0 )
+            errore("ERRORE: errore nell'accept.");
+        thpool_add_work(tpool, (void*)gestisci, &newSockFD);
         
-        listen(sockFD, 5);  /// COS'È IL 5??
-        dim_cli = sizeof(ind_cli);
+    } //Fine del while
+    close(sockFD);
+    return 0;
 
-        // Il server va avanti per sempre, aggiungendo lavoro al t.pool per ogni connessioone
-        while(1) {
-            newSockFD = accept(sockFD, (struct sockaddr *) &ind_cli, &dim_cli);
-            if( newSockFD < 0 )
-                errore("ERRORE: errore nell'accept.");
-            thpool_add_work(tpool, (void*)gestisci, &newSockFD);
-            
-        } //Fine del while
-        close(sockFD);
-        return 0;
-    }
 }
