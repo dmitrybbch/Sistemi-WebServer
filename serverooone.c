@@ -19,7 +19,7 @@
 #define PROTOCOLLO "HTTP/1.1"
 #define EOL "\r\n"
 #define DIM_EOL 2
-#define WEB_ROOT "/var/www/html"
+#define WEB_ROOT "html/"
 #define N_THREAD 4
 
 typedef struct {
@@ -119,19 +119,44 @@ int gestisci(int* fdII){
             strcpy(risorsa, WEB_ROOT);
             strcat(risorsa, ptr);
 
+            // PER CHIUDERSI SE IL FILE SI CHIAMA STOP
+            if(strcmp(ptr, "stop") == 0){
+                exit(0);
+            }
+
             char* s = strchr(ptr, '.');
             int i;
             for(i = 0; estensioni[i].est != NULL; i++){
-                if (strcmp(s + 1, estensioni[i].est) == 0) {
+                if (strcmp(s + 1, estensioni[i].est) == 0) {   // Se siamo all'estensione giusta
                     fd1 = open(risorsa, O_RDONLY, 0);
                     printf("Opening \"%s\"\n", risorsa);
-                    if (fd1 == -1) {
-                        printf("404 File not found Error\n");
-                        invia(fd, "HTTP/1.1 404 Not Found\r\n");
-                        invia(fd, "Serrrrver : Web Server in C\r\n\r\n");
-                        invia(fd, "<html><head><title>404 Not Found</head></title>");
-                        invia(fd, "<body><p>404 Not Found: The requested resource could not be found!</p></body></html>");
-                    }
+                    if (fd1 == -1){  // TODO: finire sta merda se il file non è trovato
+                        printf("404 File not found Error.\n");
+                        char risorsa404[500];
+                        strcpy(risorsa404, WEB_ROOT);
+                        strcat(risorsa404, "notFound/404.html");
+                        char prova[500];
+                        sprintf(prova, "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-type: %s\r\nContent-length: %d\r\n\r\n", estensioni[i].mediatype, dim_fileDescriptor(fd1));
+                        invia(fd, prova);
+                        fd1 = open(risorsa404, O_RDONLY, 0);
+
+                        if ((lung = dim_fileDescriptor(fd1)) == -1)
+                                printf("Error in getting size !\n");
+                            size_t byteInviatiTotali = 0;
+                            ssize_t byteInviati;
+                            printf("Blyat\n");
+                            while (byteInviatiTotali < lung) {
+                            //Zero copy optimization
+                                if ((byteInviati = sendfile(fd, fd1, 0, lung - byteInviatiTotali)) <= 0) {
+                                    if (errno == EINTR || errno == EAGAIN) {
+                                        continue;
+                                    }
+                                    perror("ERRORE: errore nel sendfile.\n");
+                                    return -1;
+                                }
+                                byteInviatiTotali += byteInviati;
+                            }
+                    }   
                     else {
                         printf("200 OK, Content-Type: %s\n\n",
                         estensioni[i].mediatype);
@@ -185,15 +210,15 @@ int main(int argc, char* argv[]) {
     int sockFD, newSockFD, pid, sid;
     pid = fork();
 
-    if (pid < 0) errore("ERRORE: Errore nella fork.\n");
-    if (pid > 0) exit(EXIT_SUCCESS);  //killa il padre
+    if (pid < 0)    errore("ERRORE: Errore nella fork.\n");
+    if (pid > 0)    exit(EXIT_SUCCESS);  //killa il padre
 
     /*Il Session Id corrisponde al PID del processo che ha creato la sessione.
     Una volta che la sessione viene terminata, tutti i processi collegati vengono
     terminati dal kernel. Visto che non vogliamo ciò, avremo bisogno di un nuovo session
     ID, e per farlo usiamo setsid (senza argomenti) che ritorna un nuovo sessione id*/
     sid = setsid();
-    if (sid < 0) exit(EXIT_FAILURE); //esce se non puo cambiare il sid
+    if (sid < 0)    exit(EXIT_FAILURE); //esce se non puo cambiare il sid
 
     // Se siamo nel thread figlio
     threadpool tpool = thpool_init(numThread);
@@ -201,8 +226,7 @@ int main(int argc, char* argv[]) {
     struct sockaddr_in ind_serv, ind_cli; // Indirizzi
 
     sockFD = socket(AF_INET, SOCK_STREAM, 0);
-    if(sockFD < 0)
-        errore("ERRORE: errore nell'apertura del socket.");
+    if(sockFD < 0)  errore("ERRORE: errore nell'apertura del socket.");
     bzero((char*) &ind_serv, sizeof(ind_serv));
 
     ind_serv.sin_family = AF_INET;

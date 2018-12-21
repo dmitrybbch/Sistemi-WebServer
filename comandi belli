@@ -1,10 +1,11 @@
-comando bello 1:
-
+Comando bello 1:
 gcc example.c thpool.c -D THPOOL_DEBUG -pthread example
 
-comando bello 2:
-
+Comando bello 2:
 gcc serverooone.c C-Thread-Pool-master/thpool.c -D THPOOL_DEBUG -pthread -o server
+
+Comando bello 3:
+ab https://127.0.0.1:10000/example.html
 
 
 <html><body><h1>It works!</h1>
