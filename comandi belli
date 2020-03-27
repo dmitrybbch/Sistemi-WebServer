@@ -1,16 +1,11 @@
-Comando bello 1:
-gcc example.c thpool.c -D THPOOL_DEBUG -pthread example
+Server SJF:
+    gcc serversjf.c lib/concurrentMinheap.c lib/thpool.c -D THPOOL_DEBUG -pthread -lpthread -lm -static -o serversjf
 
-Comando bello 2:
-gcc serverooone.c C-Thread-Pool-master/thpool.c -D THPOOL_DEBUG -pthread -o server
+Server FIFO:
+    gcc serverfifo.c lib/bufferCircolare.c lib/thpool.c -D THPOOL_DEBUG -pthread -lpthread -lm -static -o serverfifo
 
-Comando bello 3:
-ab https://127.0.0.1:10000/example.html
+Siege:
+    siege http://localhost:10000/ -t30s -l
 
-
-<html><body><h1>It works!</h1>
-<p>This is the default web page for this server.</p>
-<p>The web server software is running but no content has been added, yet.</p>
-</body></html>
-
-yo
+Ab:
+    ab https://127.0.0.1:10000/
